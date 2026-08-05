@@ -1,0 +1,28 @@
+.navButton {
+  background-color: #0070f3;
+  color: white;
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+/* Hover state */
+.navButton:hover {
+  background-color: #0051a8;
+}
+
+/* Active/Click state */
+.navButton:active {
+  transform: scale(0.98);
+}
+
+/* Disabled state */
+.navButton:disabled {
+  background-color: #cccccc;
+  color: #666666;
+  cursor: not-allowed;
+  transform: none;
+}
