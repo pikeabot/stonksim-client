@@ -24,7 +24,6 @@ interface Props {
 
 const WINDOW_SIZE = 20;
 
-
 function getTimeString(t) {
 //     const t = candles[dayIndex]["time"];
     const m = t["month"].toString() ?? "";
@@ -44,6 +43,66 @@ export default function DailyChart({
   const volumeSeries = useRef<any>();
 
   const [dayIndex, setDayIndex] = useState(WINDOW_SIZE);
+  const [buyPrice, setBuyPrice] = useState(0);
+  const [sellPrice, setSellPrice] = useState(0);
+  const [currTradeProfit, setCurrTradeProfit] = useState(0);
+  const [profit, setProfit] = useState(0);
+  const [isLong, setIsLong] = useState(false);
+  const [isShort, setIsShort] = useState(false);
+  const [numOfTrades, setNumOfTrades] = useState(0);
+
+
+  function buy() {
+    // currently not in a trade -go long
+    if (isLong === false && isShort === false) {
+        setIsLong(true);
+        setBuyPrice(data[dayIndex]["close"]);
+        setNumOfTrades(numOfTrades+1);
+    }
+    // closing out a short position
+    else if (isLong === false && isShort === true) {
+        let currProfit = sellPrice - data[dayIndex]["close"];
+        setCurrTradeProfit(currProfit);
+        setProfit(profit + currProfit);
+        setIsShort(false);
+        setBuyPrice(0);
+        setSellPrice(0);
+    }
+  };
+
+  function sell() {
+        // currently not in a trade - go short
+    if (isLong === false && isShort === false) {
+        setIsShort(true);
+        setSellPrice(data[dayIndex]["close"]);
+        setNumOfTrades(numOfTrades+1);
+    }
+    // closing out a long position
+    else if (isLong === true && isShort === false) {
+        let currProfit = data[dayIndex]["close"] - buyPrice;
+        setCurrTradeProfit(currProfit);
+        setProfit(profit + currProfit);
+        setIsLong(false);
+        setBuyPrice(0);
+        setSellPrice(0);
+    }
+  };
+
+function ChatRoom({ roomId, theme }) {
+  const onConnected = useEffectEvent(() => {
+    showNotification('Connected!', theme);
+  });
+}
+  function updateProfit() {
+    let currProfit = 0;
+    setDayIndex((i) => Math.min(data.length - 1, i + 1));
+    if (isLong === true) {
+        currProfit = data[dayIndex+1]["close"] - buyPrice;
+    } else if (isShort === true) {
+        currProfit = sellPrice - data[dayIndex+1]["close"];
+    }
+    setCurrTradeProfit(currProfit);
+  };
 
   useEffect(() => {
     if (!chartRef.current) return;
@@ -140,15 +199,44 @@ export default function DailyChart({
   }, [dayIndex]);
 
   return (
-    <div>
       <div
         style={{
           display: "flex",
-          gap: 12,
-          marginBottom: 12,
-          alignItems: "center",
+          alignItems: "flex-start",
+          gap: "20px",
+          padding: "20px",
         }}
       >
+      {/* Left: Chart */}
+      <div
+        ref={chartRef}
+        style={{
+          width: 900,
+          height: 500,
+          border: "1px solid #ddd",
+        }}
+      />
+            {/* Right: Buttons */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
+          minWidth: "120px",
+        }}
+      >
+      <span>OVERALL PROFIT: ${(profit).toFixed(2)}</span>
+      <span>NUMBER OF TRADES: {numOfTrades}</span>
+      <span>CURRENT TRADE PROFIT: ${(currTradeProfit).toFixed(2)}</span>
+      <span>BUY PRICE: ${buyPrice}</span>
+      <button className={styles.navButton}
+      onClick={() => buy() }>
+          BUY
+        </button>
+        <span>SELL PRICE: ${sellPrice}</span>
+        <button className={styles.navButton} onClick={() => sell()}>
+         SELL
+        </button>
         <span>
           {getTimeString(data[dayIndex]["time"])}
         </span>
@@ -156,22 +244,14 @@ export default function DailyChart({
         <button
         className={styles.navButton}
           disabled={dayIndex === data.length - 1}
-          onClick={() =>
-            setDayIndex((i) =>
-              Math.min(data.length - 1, i + 1)
-            )
-          }
+          onClick={() => updateProfit()}
         >
           Next Day
         </button>
+
+
       </div>
-      <div
-        ref={chartRef}
-        style={{
-          width: "100%",
-          height,
-        }}
-      />
     </div>
   );
+
 }
