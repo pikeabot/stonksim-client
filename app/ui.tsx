@@ -50,9 +50,11 @@ export default function DailyChart({
   const [isLong, setIsLong] = useState(false);
   const [isShort, setIsShort] = useState(false);
   const [numOfTrades, setNumOfTrades] = useState(0);
+  const [numWins, setNumWins] = useState(0);
+  const [winPercent, setWinPercent] = useState(0.0);
 
 
-  function buy() {
+  function buy(): void {
     // currently not in a trade -go long
     if (isLong === false && isShort === false) {
         setIsLong(true);
@@ -62,6 +64,8 @@ export default function DailyChart({
     // closing out a short position
     else if (isLong === false && isShort === true) {
         let currProfit = sellPrice - data[dayIndex]["close"];
+        let nw = numWins;
+        updateWinRate(currProfit);
         setCurrTradeProfit(currProfit);
         setProfit(profit + currProfit);
         setIsShort(false);
@@ -70,7 +74,7 @@ export default function DailyChart({
     }
   };
 
-  function sell() {
+  function sell(): void {
         // currently not in a trade - go short
     if (isLong === false && isShort === false) {
         setIsShort(true);
@@ -80,6 +84,7 @@ export default function DailyChart({
     // closing out a long position
     else if (isLong === true && isShort === false) {
         let currProfit = data[dayIndex]["close"] - buyPrice;
+        updateWinRate(currProfit);
         setCurrTradeProfit(currProfit);
         setProfit(profit + currProfit);
         setIsLong(false);
@@ -88,12 +93,17 @@ export default function DailyChart({
     }
   };
 
-function ChatRoom({ roomId, theme }) {
-  const onConnected = useEffectEvent(() => {
-    showNotification('Connected!', theme);
-  });
-}
-  function updateProfit() {
+  function updateWinRate(currProfit: number): void {
+    let nw = numWins;
+    if (currProfit > 0) {
+            nw = nw + 1
+            setNumWins(nw);
+        }
+           let wp =( nw/numOfTrades*100).toFixed(1);
+            setWinPercent(wp);
+  };
+
+  function updateProfit(): void {
     let currProfit = 0;
     setDayIndex((i) => Math.min(data.length - 1, i + 1));
     if (isLong === true) {
@@ -227,6 +237,7 @@ function ChatRoom({ roomId, theme }) {
       >
       <span>OVERALL PROFIT: ${(profit).toFixed(2)}</span>
       <span>NUMBER OF TRADES: {numOfTrades}</span>
+      <span>WINS %: {winPercent}%</span>
       <span>CURRENT TRADE PROFIT: ${(currTradeProfit).toFixed(2)}</span>
       <span>BUY PRICE: ${buyPrice}</span>
       <button className={styles.navButton}
